@@ -28,8 +28,8 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
     center_y = (min_y + max_y) / 2
 
     # Calculate the offset required to center the figure
-    offset_x = -center_x
-    offset_y = -center_y
+    offset_x = 0
+    offset_y = 0
 
     with open(gcode_file, 'w') as gcode:
         gcode.write('; Generated G-code for 3D cutting\n')
@@ -96,8 +96,8 @@ def svg_to_isi_with_3d_depth_and_colors(svg_file, isi_file, bit_diameter=0.5, re
     center_y = (min_y + max_y) / 2
 
     # Calculate the offset required to center the figure
-    offset_x = -center_x
-    offset_y = -center_y
+    offset_x = 0
+    offset_y = 0
 
     with open(isi_file, 'w') as isi:
         isi.write('; ISI File Generated for 3D cutting\n')
@@ -230,7 +230,7 @@ if uploaded_svg is not None:
     st.markdown(f'<embed src="data:image/svg+xml;base64,{svg_base64}" width="600" height="400" type="image/svg+xml">', unsafe_allow_html=True)
 
     # Ask the user for the file format choice
-    file_format = st.selectbox("Choose output file format", ['G-code (.gcode)', 'ISI File (.isi)'])
+    file_format = st.selectbox("Choose output file format", ['G-code (.gcode)', 'ISI File (.lsi)'])
 
     # Ask the user to input a scale factor
     scale_factor = get_scale_factor()
@@ -243,7 +243,7 @@ if uploaded_svg is not None:
             svg_to_gcode_with_3d_depth_and_colors("uploaded_file.svg", output_file, scale_factor=scale_factor)
             # visualize_gcode(output_file)
         else:
-            output_file += ".isi"
+            output_file += ".lsi"
             svg_to_isi_with_3d_depth_and_colors("uploaded_file.svg", output_file, scale_factor=scale_factor)
             # visualize_isi(output_file)
 
