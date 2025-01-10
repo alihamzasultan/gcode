@@ -239,7 +239,7 @@ if uploaded_svg is not None:
     scale_factor = get_scale_factor()
 
     extrusion_depth_cls_1 = st.number_input(
-        "Enter the extrusion depth for 'cls-1' (non-recessed, Dark Blue):",
+        "Enter the extrusion depth for 'cls-1' (non-recessed, Light Blue):",
         min_value=0.0,
         max_value=5.0,
         value=0.1,
@@ -247,7 +247,7 @@ if uploaded_svg is not None:
     )
 
     extrusion_depth_cls_2 = st.number_input(
-        "Enter the extrusion depth for 'cls-2' (recessed, Light Blue):",
+        "Enter the extrusion depth for 'cls-2' (recessed, Dark Blue):",
         min_value=0.0,
         max_value=5.0,
         value=0.5,
