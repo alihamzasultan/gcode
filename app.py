@@ -7,6 +7,9 @@ from matplotlib.lines import Line2D
 
 # Function to generate G-code (same as earlier)
 def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05):
+
+
+
     paths, attributes = svgpathtools.svg2paths(svg_file)
     z_height = 0  # Starting Z height (same for both colors)
     layer_height = 0.2  # Height of each layer (extrusion per pass)
@@ -43,9 +46,9 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
 
             # Apply Z offset based on color class (both start from Z=0, but extrusion depth differs)
             if 'cls-1' in color_class:  # Dark Blue: non-recessed
-                extrusion_depth = 0.1  # Small extrusion depth for non-recessed
+                extrusion_depth = extrusion_depth_cls_1  # Small extrusion depth for non-recessed
             elif 'cls-2' in color_class:  # Light Blue: recessed
-                extrusion_depth = 0.2  # Larger extrusion depth for recessed color
+                extrusion_depth = extrusion_depth_cls_2  # Larger extrusion depth for recessed color
             else:
                 extrusion_depth = 0.1  # Default extrusion depth
 
@@ -108,9 +111,9 @@ def svg_to_isi_with_3d_depth_and_colors(svg_file, isi_file, bit_diameter=0.5, re
 
             # Apply Z offset based on color class (both start from Z=0, but extrusion depth differs)
             if 'cls-1' in color_class:  # Dark Blue: non-recessed
-                extrusion_depth = 0.1  # Small extrusion depth for non-recessed
+                extrusion_depth = extrusion_depth_cls_1  # Small extrusion depth for non-recessed
             elif 'cls-2' in color_class:  # Light Blue: recessed
-                extrusion_depth = 0.2  # Larger extrusion depth for recessed color
+                extrusion_depth = extrusion_depth_cls_2  # Larger extrusion depth for recessed color
             else:
                 extrusion_depth = 0.1  # Default extrusion depth
 
@@ -234,6 +237,22 @@ if uploaded_svg is not None:
 
     # Ask the user to input a scale factor
     scale_factor = get_scale_factor()
+
+    extrusion_depth_cls_1 = st.number_input(
+        "Enter the extrusion depth for 'cls-1' (non-recessed, Dark Blue):",
+        min_value=0.0,
+        max_value=5.0,
+        value=0.1,
+        step=0.1
+    )
+
+    extrusion_depth_cls_2 = st.number_input(
+        "Enter the extrusion depth for 'cls-2' (recessed, Light Blue):",
+        min_value=0.0,
+        max_value=5.0,
+        value=0.5,
+        step=0.1
+    )
 
     # Button to generate G-code or ISI file
     if st.button("Generate File"):
