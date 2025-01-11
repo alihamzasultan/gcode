@@ -77,63 +77,63 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
         gcode.write('M84 ; Disable motors\n')
 
 # Function to generate .isi file
-def svg_to_isi_with_3d_depth_and_colors(svg_file, isi_file, bit_diameter=0.5, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05):
-    paths, attributes = svgpathtools.svg2paths(svg_file)
-    z_height = 0  # Starting Z height (same for both colors)
-    layer_height = 0.2  # Height of each layer (extrusion per pass)
-    bit_radius = bit_diameter / 2
+# def svg_to_isi_with_3d_depth_and_colors(svg_file, isi_file, bit_diameter=0.5, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05):
+#     paths, attributes = svgpathtools.svg2paths(svg_file)
+#     z_height = 0  # Starting Z height (same for both colors)
+#     layer_height = 0.2  # Height of each layer (extrusion per pass)
+#     bit_radius = bit_diameter / 2
 
-    # Find the bounding box (min and max X, Y values)
-    min_x, min_y = float('inf'), float('inf')
-    max_x, max_y = float('-inf'), float('-inf')
+#     # Find the bounding box (min and max X, Y values)
+#     min_x, min_y = float('inf'), float('inf')
+#     max_x, max_y = float('-inf'), float('-inf')
 
-    for path in paths:
-        for segment in path:
-            min_x = min(min_x, segment.start.real, segment.end.real)
-            min_y = min(min_y, segment.start.imag, segment.end.imag)
-            max_x = max(max_x, segment.start.real, segment.end.real)
-            max_y = max(max_y, segment.start.imag, segment.end.imag)
+#     for path in paths:
+#         for segment in path:
+#             min_x = min(min_x, segment.start.real, segment.end.real)
+#             min_y = min(min_y, segment.start.imag, segment.end.imag)
+#             max_x = max(max_x, segment.start.real, segment.end.real)
+#             max_y = max(max_y, segment.start.imag, segment.end.imag)
 
-    # Calculate center of the bounding box
-    center_x = (min_x + max_x) / 2
-    center_y = (min_y + max_y) / 2
+#     # Calculate center of the bounding box
+#     center_x = (min_x + max_x) / 2
+#     center_y = (min_y + max_y) / 2
 
-    # Calculate the offset required to center the figure
-    offset_x = 0
-    offset_y = 0
+#     # Calculate the offset required to center the figure
+#     offset_x = 0
+#     offset_y = 0
 
-    with open(isi_file, 'w') as isi:
-        isi.write('; ISI File Generated for 3D cutting\n')
+#     with open(isi_file, 'w') as isi:
+#         isi.write('; ISI File Generated for 3D cutting\n')
 
-        # Loop through each path and color
-        for path, attr in zip(paths, attributes):
-            color_class = attr.get('class', '')
+#         # Loop through each path and color
+#         for path, attr in zip(paths, attributes):
+#             color_class = attr.get('class', '')
 
-            # Apply Z offset based on color class (both start from Z=0, but extrusion depth differs)
-            if 'cls-1' in color_class:  # Dark Blue: non-recessed
-                extrusion_depth = extrusion_depth_cls_1  # Small extrusion depth for non-recessed
-            elif 'cls-2' in color_class:  # Light Blue: recessed
-                extrusion_depth = extrusion_depth_cls_2  # Larger extrusion depth for recessed color
-            else:
-                extrusion_depth = 0.1  # Default extrusion depth
+#             # Apply Z offset based on color class (both start from Z=0, but extrusion depth differs)
+#             if 'cls-1' in color_class:  # Dark Blue: non-recessed
+#                 extrusion_depth = extrusion_depth_cls_1  # Small extrusion depth for non-recessed
+#             elif 'cls-2' in color_class:  # Light Blue: recessed
+#                 extrusion_depth = extrusion_depth_cls_2  # Larger extrusion depth for recessed color
+#             else:
+#                 extrusion_depth = 0.1  # Default extrusion depth
 
-            # Loop over each segment to add extrusion
-            for layer in range(10):  # Adjust the range for how many layers to cut
-                for segment in path:
-                    # Apply scaling and centering to each point
-                    start_x = (segment.start.real + offset_x) * scale_factor
-                    start_y = (segment.start.imag + offset_y) * scale_factor
-                    end_x = (segment.end.real + offset_x) * scale_factor
-                    end_y = (segment.end.imag + offset_y) * scale_factor
+#             # Loop over each segment to add extrusion
+#             for layer in range(10):  # Adjust the range for how many layers to cut
+#                 for segment in path:
+#                     # Apply scaling and centering to each point
+#                     start_x = (segment.start.real + offset_x) * scale_factor
+#                     start_y = (segment.start.imag + offset_y) * scale_factor
+#                     end_x = (segment.end.real + offset_x) * scale_factor
+#                     end_y = (segment.end.imag + offset_y) * scale_factor
 
-                    # Write the toolpath for the current Z height
-                    isi.write(f'LINE X{start_x:.3f} Y{start_y:.3f} Z{z_height:.3f} -> ')
-                    isi.write(f'X{end_x:.3f} Y{end_y:.3f} Z{z_height + extrusion_depth:.3f}\n')
+#                     # Write the toolpath for the current Z height
+#                     isi.write(f'LINE X{start_x:.3f} Y{start_y:.3f} Z{z_height:.3f} -> ')
+#                     isi.write(f'X{end_x:.3f} Y{end_y:.3f} Z{z_height + extrusion_depth:.3f}\n')
 
-                # After each layer, decrease Z height for the next layer (the actual cutting happens here)
-                z_height -= extrusion_depth  # Move down by extrusion depth for the next pass
+#                 # After each layer, decrease Z height for the next layer (the actual cutting happens here)
+#                 z_height -= extrusion_depth  # Move down by extrusion depth for the next pass
 
-        isi.write('; End of ISI File\n')
+#         isi.write('; End of ISI File\n')
 
 def get_scale_factor():
     # Take width and height input in inches from the user
@@ -210,7 +210,7 @@ def get_scale_factor():
 
 # Streamlit UI
 # Streamlit UI
-st.title('SVG to G-code or ISI File Generator')
+st.title('SVG to ISI File Generator')
 
 # File uploader for SVG file
 uploaded_svg = st.file_uploader("Upload an SVG file", type="svg")
@@ -233,7 +233,7 @@ if uploaded_svg is not None:
     st.markdown(f'<embed src="data:image/svg+xml;base64,{svg_base64}" width="600" height="400" type="image/svg+xml">', unsafe_allow_html=True)
 
     # Ask the user for the file format choice
-    file_format = st.selectbox("Choose output file format", ['G-code (.gcode)', 'ISI File (.lsi)'])
+    file_format ='ISI File (.lsi)'
 
     # Ask the user to input a scale factor
     scale_factor = get_scale_factor()
@@ -258,12 +258,12 @@ if uploaded_svg is not None:
     if st.button("Generate File"):
         output_file = "output"
         if file_format == 'G-code (.gcode)':
-            output_file += ".gcode"
+            output_file += ".lsi"
             svg_to_gcode_with_3d_depth_and_colors("uploaded_file.svg", output_file, scale_factor=scale_factor)
             # visualize_gcode(output_file)
         else:
             output_file += ".lsi"
-            svg_to_isi_with_3d_depth_and_colors("uploaded_file.svg", output_file, scale_factor=scale_factor)
+            svg_to_gcode_with_3d_depth_and_colors("uploaded_file.svg", output_file, scale_factor=scale_factor)
             # visualize_isi(output_file)
 
         # Provide the download link
