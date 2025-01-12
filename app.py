@@ -6,33 +6,53 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 # Function to generate G-code (same as earlier)
-def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05):
+import svgpathtools
+from svgpathtools import Path, parse_path
 
-
-
+def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05, grid_spacing=35):
     paths, attributes = svgpathtools.svg2paths(svg_file)
     z_height = 0  # Starting Z height (same for both colors)
     layer_height = 0.2  # Height of each layer (extrusion per pass)
     bit_radius = bit_diameter / 2
 
-    # Find the bounding box (min and max X, Y values)
-    min_x, min_y = float('inf'), float('inf')
-    max_x, max_y = float('-inf'), float('-inf')
+    # Function to check if a point is inside a path
+    def is_point_inside_path(path, x, y):
+        point = complex(x, y)
+        crossings = 0
+        for segment in path:
+            if (segment.start.imag > y) != (segment.end.imag > y):
+                cross_x = (y - segment.start.imag) * (segment.end.real - segment.start.real) / (segment.end.imag - segment.start.imag) + segment.start.real
+                if x < cross_x:
+                    crossings += 1
+        return crossings % 2 == 1  # If the point has an odd number of crossings, it is inside
 
-    for path in paths:
+    # Find the bounding box (min and max X, Y values) for all paths
+    def get_bounding_box(path):
+        min_x, min_y = float('inf'), float('inf')
+        max_x, max_y = float('-inf'), float('-inf')
+
         for segment in path:
             min_x = min(min_x, segment.start.real, segment.end.real)
             min_y = min(min_y, segment.start.imag, segment.end.imag)
             max_x = max(max_x, segment.start.real, segment.end.real)
             max_y = max(max_y, segment.start.imag, segment.end.imag)
 
-    # Calculate center of the bounding box
-    center_x = (min_x + max_x) / 2
-    center_y = (min_y + max_y) / 2
+        return min_x, min_y, max_x, max_y
 
-    # Calculate the offset required to center the figure
-    offset_x = 0
-    offset_y = 0
+    # Find the overall bounding box for all paths
+    min_x_all, min_y_all = float('inf'), float('inf')
+    max_x_all, max_y_all = float('-inf'), float('-inf')
+
+    for path in paths:
+        min_x, min_y, max_x, max_y = get_bounding_box(path)
+        min_x_all = min(min_x_all, min_x)
+        min_y_all = min(min_y_all, min_y)
+        max_x_all = max(max_x_all, max_x)
+        max_y_all = max(max_y_all, max_y)
+
+    # Translate all paths so that the bounding box starts at (0,0)
+    offset_x = -min_x_all
+    offset_y = -min_y_all
 
     with open(gcode_file, 'w') as gcode:
         gcode.write('; Generated G-code for 3D cutting\n')
@@ -45,32 +65,45 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
             color_class = attr.get('class', '')
 
             # Apply Z offset based on color class (both start from Z=0, but extrusion depth differs)
-            if 'cls-1' in color_class:  # Dark Blue: non-recessed
+            if 'cls-1' in color_class:  # Light Blue: recessed
                 extrusion_depth = extrusion_depth_cls_1  # Small extrusion depth for non-recessed
-            elif 'cls-2' in color_class:  # Light Blue: recessed
-                extrusion_depth = extrusion_depth_cls_2  # Larger extrusion depth for recessed color
+
+                min_x, min_y, max_x, max_y = get_bounding_box(path)
+
+                current_y = min_y
+                while current_y < max_y:
+                    x_start = None
+                    x_end = None
+
+                    for x in range(int(min_x), int(max_x) + 1):
+                        if is_point_inside_path(path, x, current_y):
+                            if x_start is None:
+                                x_start = x
+                            x_end = x
+
+                    if x_start is not None and x_end is not None:
+                        gcode.write(f'G1 X{(x_start + offset_x) * scale_factor:.3f} Y{(current_y + offset_y) * scale_factor:.3f} Z{z_height + extrusion_depth:.3f} F1500\n')
+                        gcode.write(f'G1 X{(x_end + offset_x) * scale_factor:.3f} Y{(current_y + offset_y) * scale_factor:.3f} Z{z_height + extrusion_depth:.3f} F1500\n')
+
+                    current_y += grid_spacing  # Move to the next grid line
+
+            elif 'cls-2' in color_class:  # Dark Blue: NON-recessed
+                extrusion_depth = extrusion_depth_cls_2
             else:
                 extrusion_depth = 0.1  # Default extrusion depth
 
-            # Loop over each segment to add extrusion
             for layer in range(10):  # Adjust the range for how many layers to cut
                 for segment in path:
-                    # Apply scaling and centering to each point
                     start_x = (segment.start.real + offset_x) * scale_factor
                     start_y = (segment.start.imag + offset_y) * scale_factor
                     end_x = (segment.end.real + offset_x) * scale_factor
                     end_y = (segment.end.imag + offset_y) * scale_factor
 
-                    # Move to the start of the path at the current Z height
                     gcode.write(f'G1 X{start_x:.3f} Y{start_y:.3f} Z{z_height:.3f} F1500\n')
-
-                    # Extrusion at current layer depth
                     gcode.write(f'G1 X{end_x:.3f} Y{end_y:.3f} Z{z_height + extrusion_depth:.3f} F1500\n')
 
-                # After each layer, decrease Z height for the next layer (the actual cutting happens here)
                 z_height -= extrusion_depth  # Move down by extrusion depth for the next pass
 
-        # End of G-code, move to home position and turn off extruder and motors
         gcode.write('G28 ; Home all axes\n')
         gcode.write('M104 S0 ; Turn off extruder\n')
         gcode.write('M140 S0 ; Turn off bed\n')
