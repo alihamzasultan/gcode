@@ -64,9 +64,10 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
         for path, attr in zip(paths, attributes):
             color_class = attr.get('class', '')
 
-            # Apply Z offset based on color class (both start from Z=0, but extrusion depth differs)
+            # Check the color class and determine depth
             if 'cls-1' in color_class:  # Light Blue: recessed
-                extrusion_depth = extrusion_depth_cls_1  # Small extrusion depth for non-recessed
+                z_height = 0  # Reset Z height for cls-1 areas to ensure uniformity
+                extrusion_depth = recess_depth  # Apply the correct depth for recessed areas
 
                 min_x, min_y, max_x, max_y = get_bounding_box(path)
 
@@ -75,12 +76,14 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
                     x_start = None
                     x_end = None
 
+                    # Find the start and end X positions for the current Y line
                     for x in range(int(min_x), int(max_x) + 1):
                         if is_point_inside_path(path, x, current_y):
                             if x_start is None:
                                 x_start = x
                             x_end = x
 
+                    # Write G-code for the detected line segment
                     if x_start is not None and x_end is not None:
                         gcode.write(f'G1 X{(x_start + offset_x) * scale_factor:.3f} Y{(current_y + offset_y) * scale_factor:.3f} Z{z_height + extrusion_depth:.3f} F1500\n')
                         gcode.write(f'G1 X{(x_end + offset_x) * scale_factor:.3f} Y{(current_y + offset_y) * scale_factor:.3f} Z{z_height + extrusion_depth:.3f} F1500\n')
@@ -92,7 +95,8 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
             else:
                 extrusion_depth = 0.1  # Default extrusion depth
 
-            for layer in range(10):  # Adjust the range for how many layers to cut
+            # Process the path for cutting (loop through layers)
+            for layer in range(10):  # Adjust the range for the number of layers
                 for segment in path:
                     start_x = (segment.start.real + offset_x) * scale_factor
                     start_y = (segment.start.imag + offset_y) * scale_factor
@@ -104,10 +108,10 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
 
                 z_height -= extrusion_depth  # Move down by extrusion depth for the next pass
 
-        gcode.write('G28 ; Home all axes\n')
-        gcode.write('M104 S0 ; Turn off extruder\n')
-        gcode.write('M140 S0 ; Turn off bed\n')
-        gcode.write('M84 ; Disable motors\n')
+                gcode.write('G28 ; Home all axes\n')
+                gcode.write('M104 S0 ; Turn off extruder\n')
+                gcode.write('M140 S0 ; Turn off bed\n')
+                gcode.write('M84 ; Disable motors\n')
 
 # Function to generate .isi file
 # def svg_to_isi_with_3d_depth_and_colors(svg_file, isi_file, bit_diameter=0.5, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05):
