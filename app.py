@@ -174,8 +174,11 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
 
 def get_scale_factor():
     # Take width and height input in inches from the user
-    width_inch = st.number_input("Enter width in inches", min_value=0.0, step=0.1)
-    height_inch = st.number_input("Enter height in inches", min_value=0.0, step=0.1)
+    st.subheader("X")
+    width_inch = st.number_input("Enter width in inches", min_value=0.0, value=20.0, step=0.1)
+    st.subheader("Y")
+    height_inch = st.number_input("Enter height in inches", min_value=0.0, value=40.0, step=0.1)
+
     
     # Convert inches to mm
     width_mm = width_inch * 25.4
@@ -187,7 +190,6 @@ def get_scale_factor():
     # Ensure the scale factor is within the desired range
     scale_factor = max(0.01, min(scale_factor, 10.0))
 
-    st.write("Scale factor is: ",scale_factor)
     
     return scale_factor
 # G-code visualization function
@@ -275,21 +277,35 @@ if uploaded_svg is not None:
     # Ask the user to input a scale factor
     scale_factor = get_scale_factor()
 
-    extrusion_depth_cls_1 = st.number_input(
-        "Enter the extrusion depth for 'cls-1' (non-recessed, Light Blue):",
+    # Sidebar inputs for block thickness and extrusion depths
+    st.sidebar.subheader("Thickness of the block-Z ")
+    block_thickness = st.sidebar.number_input(
+        "In Inches",
         min_value=0.0,
-        max_value=5.0,
-        value=0.1,
+        max_value=4.0,
+        value=4.0,
         step=0.1
     )
 
-    extrusion_depth_cls_2 = st.number_input(
-        "Enter the extrusion depth for 'cls-2' (recessed, Dark Blue):",
+    st.sidebar.subheader("Light Blue")
+    extrusion_depth_cls_1 = st.sidebar.number_input(
+        "Recessed, in inches",
         min_value=0.0,
-        max_value=5.0,
-        value=0.5,
+        max_value=block_thickness,  # Max value is based on block thickness
+        value=min(4.0, block_thickness),
         step=0.1
     )
+
+    st.sidebar.write("Dark Blue")
+    extrusion_depth_cls_2 = st.sidebar.number_input(
+        "Non-recessed, in inches",
+        min_value=0.0,
+        max_value=block_thickness,  # Max value is based on block thickness
+        value=min(0.1, block_thickness),
+        step=0.1
+    )
+
+
 
     # Button to generate G-code or ISI file
     if st.button("Generate File"):
