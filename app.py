@@ -5,15 +5,14 @@ import base64
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-# Function to generate G-code (same as earlier
+# Function to generate G-code (same as earlier)
 import svgpathtools
-from svgpathtools import Path, parse_path
+from svgpathtools import Path
 
-def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05, grid_spacing=35):
+def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05, grid_spacing=35):
     paths, attributes = svgpathtools.svg2paths(svg_file)
     z_height = 0  # Starting Z height (same for both colors)
-    # layer_height = 0.00787  # Height of each layer (extrusion per pass)
-    # bit_radius = bit_diameter / 2
+    # bit_diameter is assumed to be in inches
 
     # Function to check if a point is inside a path
     def is_point_inside_path(path, x, y):
@@ -56,7 +55,7 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
 
     with open(gcode_file, 'w') as gcode:
         gcode.write('; Generated G-code for 3D cutting\n')
-        gcode.write('G21 ; Set units to Inches\n')
+        gcode.write('G20 ; Set units to Inches\n')
         gcode.write('G90 ; Use absolute positioning\n')
         gcode.write('G28 ; Home all axes\n')
 
@@ -67,7 +66,7 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
             # Check the color class and determine depth
             if 'cls-1' in color_class:  # Light Blue: recessed
                 z_height = 0  # Reset Z height for cls-1 areas to ensure uniformity
-                extrusion_depth = recess_depth  # Apply the correct depth for recessed areas
+                extrusion_depth = extrusion_depth_cls_1  # Apply the correct depth for recessed areas
 
                 min_x, min_y, max_x, max_y = get_bounding_box(path)
 
@@ -91,7 +90,8 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
                     current_y += grid_spacing  # Move to the next grid line
 
             elif 'cls-2' in color_class:  # Dark Blue: NON-recessed
-                extrusion_depth = extrusion_depth_cls_2
+                extrusion_depth = extrusion_depth_cls_2  # Default extrusion depth for cls-2, you can modify this
+
             else:
                 extrusion_depth = 0.1  # Default extrusion depth
 
@@ -108,10 +108,10 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
 
                 z_height -= extrusion_depth  # Move down by extrusion depth for the next pass
 
-                gcode.write('G28 ; Home all axes\n')
-                gcode.write('M104 S0 ; Turn off extruder\n')
-                gcode.write('M140 S0 ; Turn off bed\n')
-                gcode.write('M84 ; Disable motors\n')
+        gcode.write('G28 ; Home all axes\n')
+        gcode.write('M104 S0 ; Turn off extruder\n')
+        gcode.write('M140 S0 ; Turn off bed\n')
+        gcode.write('M84 ; Disable motors\n')
 
 # Function to generate .isi file
 # def svg_to_isi_with_3d_depth_and_colors(svg_file, isi_file, bit_diameter=0.5, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05):
