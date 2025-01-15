@@ -199,7 +199,7 @@ def get_scale_factor():
 #         if line.startswith('G1'):
 #             parts = line.split()
 #             x = y = None
-#             for part in parts:
+#             for part in parts:a
 #                 if part.startswith('X'):
 #                     x = float(part[1:])
 #                 elif part.startswith('Y'):
