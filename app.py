@@ -5,7 +5,7 @@ import base64
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-# Function to generate G-code (same as earlier)
+# Function to generate G-code (same as earlier
 import svgpathtools
 from svgpathtools import Path
 
