@@ -5,15 +5,15 @@ import base64
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-# Function to generate G-code (same as earlier
+# Function to generate G-code (same as earlier)
 import svgpathtools
 from svgpathtools import Path, parse_path
 
 def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05, grid_spacing=35):
     paths, attributes = svgpathtools.svg2paths(svg_file)
     z_height = 0  # Starting Z height (same for both colors)
-    layer_height = 0.2  # Height of each layer (extrusion per pass)
-    bit_radius = bit_diameter / 2
+    # layer_height = 0.00787  # Height of each layer (extrusion per pass)
+    # bit_radius = bit_diameter / 2
 
     # Function to check if a point is inside a path
     def is_point_inside_path(path, x, y):
@@ -56,7 +56,7 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, bit_diameter=0.5
 
     with open(gcode_file, 'w') as gcode:
         gcode.write('; Generated G-code for 3D cutting\n')
-        gcode.write('G21 ; Set units to mm\n')
+        gcode.write('G21 ; Set units to Inches\n')
         gcode.write('G90 ; Use absolute positioning\n')
         gcode.write('G28 ; Home all axes\n')
 
@@ -179,19 +179,14 @@ def get_scale_factor():
     st.subheader("Y")
     height_inch = st.number_input("Enter height in inches", min_value=0.0, value=40.0, step=0.1)
 
-    
-    # Convert inches to mm
-    width_mm = width_inch * 25.4
-    height_mm = height_inch * 25.4
-    
     # Calculate the scale factor
-    scale_factor = min(width_mm, height_mm) / 1000  # Scaling down to keep the factor between 0.01 and 10.0
-    
+    scale_factor = min(width_inch, height_inch) / 100  # Scaling down to keep the factor between 0.01 and 10.0
+
     # Ensure the scale factor is within the desired range
     scale_factor = max(0.01, min(scale_factor, 10.0))
 
-    
     return scale_factor
+
 # G-code visualization function
 # def visualize_gcode(gcode_file):
 #     with open(gcode_file, 'r') as gcode:
@@ -282,7 +277,7 @@ if uploaded_svg is not None:
     block_thickness = st.sidebar.number_input(
         "In Inches",
         min_value=0.0,
-        max_value=4.0,
+        max_value=9.0,
         value=4.0,
         step=0.1
     )
