@@ -9,7 +9,7 @@ from svgpathtools import Path
 
 def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05, grid_spacing=35):
     paths, attributes = svgpathtools.svg2paths(svg_file)
-    z_height = 0  # Starting Z height (same for both colors)
+    z_height = 0  # Starting Z height (same for both colors
     # bit_diameter is assumed to be in inches
 
     # Function to check if a point is inside a path
