@@ -87,15 +87,18 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, recess_depth=1.7
                         gcode.write(f'G1 X{(x_end + offset_x) * scale_factor:.3f} Y{(current_y + offset_y) * scale_factor:.3f} Z{z_height + extrusion_depth:.3f} F1500\n')
 
                     current_y += grid_spacing  # Move to the next grid line
+                layer_range = 2 
 
             elif 'cls-2' in color_class:  # Dark Blue: NON-recessed
                 extrusion_depth = extrusion_depth_cls_2  # Default extrusion depth for cls-2, you can modify this
+                layer_range = 1
 
             else:
                 extrusion_depth = 0.1  # Default extrusion depth
+                layer_range = 10
 
             # Process the path for cutting (loop through layers)
-            for layer in range(10):  # Adjust the range for the number of layers
+            for layer in range(layer_range):  # Adjust the range for the number of layers
                 for segment in path:
                     start_x = (segment.start.real + offset_x) * scale_factor
                     start_y = (segment.start.imag + offset_y) * scale_factor
@@ -128,7 +131,7 @@ def get_scale_factor():
     height_inch = scaled_height_input / scaling_factor
     # Calculate the scale factor
 
-    scale_factor = min(width_inch, height_inch) / 1000  # Adjust the divisor to scale down further
+    scale_factor = min(width_inch, height_inch) / 100 # Adjust the divisor to scale down further
 
     # Ensure the scale factor is within the desired range
     scale_factor = max(0.001, min(scale_factor, 1.0))
@@ -183,7 +186,7 @@ if uploaded_svg is not None:
         value=min(4.0, block_thickness),
         step=0.1
     )
-    extrusion_depth_cls_1 = extrusion_depth_cls_1/1000
+    extrusion_depth_cls_1 = extrusion_depth_cls_1/100
 
     st.sidebar.write("Dark Blue")
     extrusion_depth_cls_2 = st.sidebar.number_input(
@@ -193,7 +196,7 @@ if uploaded_svg is not None:
         value=min(0.1, block_thickness),
         step=0.1
     )
-    extrusion_depth_cls_2 = extrusion_depth_cls_2/1000
+    extrusion_depth_cls_2 = extrusion_depth_cls_2/100
 
     # Button to generate G-code or ISI file
     if st.button("Generate File"):
