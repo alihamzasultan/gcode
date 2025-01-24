@@ -10,7 +10,7 @@ from svgpathtools import Path
 
 def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05, grid_spacing=35):
     paths, attributes = svgpathtools.svg2paths(svg_file)
-    z_height = 0  # Starting Z height (same for both color
+    z_height = 0  # Starting Z height (same for both colors
     # bit_diameter is assumed to be in inches
 
     # Function to check if a point is inside a path
@@ -120,10 +120,10 @@ def get_scale_factor():
     scaling_factor = 100
 
     # Input fields for width and height in scaled units
-    st.subheader("X")
+    st.subheader("W")
     scaled_width_input = st.number_input("Enter width in scaled units", min_value=0.0, value=20.0, step=0.1)
 
-    st.subheader("Y")
+    st.subheader("H")
     scaled_height_input = st.number_input("Enter height in scaled units", min_value=0.0, value=40.0, step=0.1)
 
     # Convert the scaled values back to inches (e.g., 20 becomes 0.2)
