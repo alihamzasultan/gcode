@@ -169,6 +169,7 @@ if uploaded_svg is not None:
 
     # Sidebar inputs for block thickness and extrusion depths
     st.sidebar.subheader("Thickness of the block-Z ")
+    st.sidebar.write("Overall thickness of the block")
     block_thickness = st.sidebar.number_input(
         "In Inches",
         min_value=0.0,
@@ -180,7 +181,7 @@ if uploaded_svg is not None:
 
     st.sidebar.subheader("Light Blue")
     extrusion_depth_cls_1 = st.sidebar.number_input(
-        "Recessed, in inches",
+        "Amount of Recessed for light blue color",
         min_value=0.0,
         max_value=block_thickness,  # Max value is based on block thickness
         value=min(4.0, block_thickness),
@@ -188,15 +189,17 @@ if uploaded_svg is not None:
     )
     extrusion_depth_cls_1 = extrusion_depth_cls_1/100
 
-    st.sidebar.write("Dark Blue")
-    extrusion_depth_cls_2 = st.sidebar.number_input(
-        "Non-recessed, in inches",
-        min_value=0.0,
-        max_value=block_thickness,  # Max value is based on block thickness
-        value=min(0.1, block_thickness),
-        step=0.1
-    )
-    extrusion_depth_cls_2 = extrusion_depth_cls_2/100
+
+
+    st.sidebar.write("Dark Blue color has 0.0 recess depth by default")
+    # extrusion_depth_cls_2 = st.sidebar.number_input(
+    #     "Non-recessed, in inches",
+    #     min_value=0.0,
+    #     max_value=block_thickness,  # Max value is based on block thickness
+    #     value=min(0.1, block_thickness),
+    #     step=0.1
+    # )
+    extrusion_depth_cls_2 = 0.0
 
     # Button to generate G-code or ISI file
     if st.button("Generate File"):
