@@ -11,7 +11,6 @@ from svgpathtools import Path
 def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05, grid_spacing=35):
     paths, attributes = svgpathtools.svg2paths(svg_file)
     z_height = 0  # Starting Z height (same for both color
-    # bit_diameter is assumed to be in inches
 
     # Function to check if a point is inside a path
     def is_point_inside_path(path, x, y):
@@ -53,10 +52,13 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, recess_depth=1.7
     offset_y = -min_y_all
 
     with open(gcode_file, 'w') as gcode:
-        gcode.write('; Generated G-code for 3D cutting\n')
-        gcode.write('G20 ; Set units to Inches\n')
+        # Write standard header
+        gcode.write('M3S3500 ; Spindle on\n')
+        gcode.write('G4P5 ; Pause\n')
+        gcode.write('G0X0.0000Y0.0000 ; Move to origin\n')
+        
         gcode.write('G90 ; Use absolute positioning\n')
-        gcode.write('G28 ; Home all axes\n')
+        gcode.write('G20 ; Set units to Inches\n')
 
         # Loop through each path and color
         for path, attr in zip(paths, attributes):
@@ -83,14 +85,16 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, recess_depth=1.7
 
                     # Write G-code for the detected line segment
                     if x_start is not None and x_end is not None:
-                        gcode.write(f'G1 X{(x_start + offset_x) * scale_factor:.3f} Y{(current_y + offset_y) * scale_factor:.3f} Z{z_height + extrusion_depth:.3f} F1500\n')
-                        gcode.write(f'G1 X{(x_end + offset_x) * scale_factor:.3f} Y{(current_y + offset_y) * scale_factor:.3f} Z{z_height + extrusion_depth:.3f} F1500\n')
+                        # Move to start position
+                        gcode.write(f'G0X{(x_start + offset_x) * scale_factor:.4f}Y{(current_y + offset_y) * scale_factor:.4f}Z{z_height + extrusion_depth:.4f}\n')
+                        # Cut to end position
+                        gcode.write(f'G1X{(x_end + offset_x) * scale_factor:.4f}Y{(current_y + offset_y) * scale_factor:.4f}Z{z_height + extrusion_depth:.4f}F120.0\n')
 
                     current_y += grid_spacing  # Move to the next grid line
                 layer_range = 2 
 
             elif 'cls-2' in color_class:  # Dark Blue: NON-recessed
-                extrusion_depth = extrusion_depth_cls_2  # Default extrusion depth for cls-2, you can modify this
+                extrusion_depth = extrusion_depth_cls_2  # Default extrusion depth for cls-2
                 layer_range = 1
 
             else:
@@ -105,15 +109,18 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, recess_depth=1.7
                     end_x = (segment.end.real + offset_x) * scale_factor
                     end_y = (segment.end.imag + offset_y) * scale_factor
 
-                    gcode.write(f'G1 X{start_x:.3f} Y{start_y:.3f} Z{z_height:.3f} F1500\n')
-                    gcode.write(f'G1 X{end_x:.3f} Y{end_y:.3f} Z{z_height + extrusion_depth:.3f} F1500\n')
+                    # Rapid move to start position
+                    gcode.write(f'G0X{start_x:.4f}Y{start_y:.4f}Z{z_height:.4f}\n')
+                    # Linear move to end position with feed rate
+                    gcode.write(f'G1X{end_x:.4f}Y{end_y:.4f}Z{z_height + extrusion_depth:.4f}F120.0\n')
 
                 z_height -= extrusion_depth  # Move down by extrusion depth for the next pass
 
-        gcode.write('G28 ; Home all axes\n')
-        gcode.write('M104 S0 ; Turn off extruder\n')
-        gcode.write('M140 S0 ; Turn off bed\n')
-        gcode.write('M84 ; Disable motors\n')
+        # Write footer
+        gcode.write('G0Z0.7500 ; Lift tool\n')
+        gcode.write('G0X0.0000Y0.0000 ; Return to origin\n')
+        gcode.write('M30 ; Program end\n')
+        gcode.write('G49 ; Cancel tool length offset\n')
 
 def get_scale_factor():
     # Take width and height input in inches from the user
@@ -135,7 +142,6 @@ def get_scale_factor():
 
     # Ensure the scale factor is within the desired range
     scale_factor = max(0.001, min(scale_factor, 1.0))
-
 
     return scale_factor
 
@@ -178,7 +184,6 @@ if uploaded_svg is not None:
         step=0.1
     )
   
-
     st.sidebar.subheader("Light Blue")
     extrusion_depth_cls_1 = st.sidebar.number_input(
         "Amount of Recessed for light blue color",
@@ -189,16 +194,7 @@ if uploaded_svg is not None:
     )
     extrusion_depth_cls_1 = extrusion_depth_cls_1/100
 
-
-
     st.sidebar.write("Dark Blue color has 0.0 recess depth by default")
-    # extrusion_depth_cls_2 = st.sidebar.number_input(
-    #     "Non-recessed, in inches",
-    #     min_value=0.0,
-    #     max_value=block_thickness,  # Max value is based on block thickness
-    #     value=min(0.1, block_thickness),
-    #     step=0.1
-    # )
     extrusion_depth_cls_2 = 0.0
 
     # Button to generate G-code or ISI file
@@ -207,11 +203,9 @@ if uploaded_svg is not None:
         if file_format == 'G-code (.gcode)':
             output_file += ".lsi"
             svg_to_gcode_with_3d_depth_and_colors("uploaded_file.svg", output_file, scale_factor=scale_factor)
-            # visualize_gcode(output_file)
         else:
             output_file += ".lsi"
             svg_to_gcode_with_3d_depth_and_colors("uploaded_file.svg", output_file, scale_factor=scale_factor)
-            # visualize_isi(output_file)
 
         # Provide the download link
         with open(output_file, "rb") as f:
