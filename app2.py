@@ -10,7 +10,7 @@ from svgpathtools import Path
 
 def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, recess_depth=1.75, extrusion_depth=0.1, scale_factor=0.05, grid_spacing=35):
     paths, attributes = svgpathtools.svg2paths(svg_file)
-    z_height = 0  # Starting Z height (same for both colors
+    z_height = 0  # Starting Z height (same for both color
     # bit_diameter is assumed to be in inches
 
     # Function to check if a point is inside a path
@@ -87,15 +87,18 @@ def svg_to_gcode_with_3d_depth_and_colors(svg_file, gcode_file, recess_depth=1.7
                         gcode.write(f'G1 X{(x_end + offset_x) * scale_factor:.3f} Y{(current_y + offset_y) * scale_factor:.3f} Z{z_height + extrusion_depth:.3f} F1500\n')
 
                     current_y += grid_spacing  # Move to the next grid line
+                layer_range = 2 
 
             elif 'cls-2' in color_class:  # Dark Blue: NON-recessed
                 extrusion_depth = extrusion_depth_cls_2  # Default extrusion depth for cls-2, you can modify this
+                layer_range = 1
 
             else:
                 extrusion_depth = 0.1  # Default extrusion depth
+                layer_range = 10
 
             # Process the path for cutting (loop through layers)
-            for layer in range(10):  # Adjust the range for the number of layers
+            for layer in range(layer_range):  # Adjust the range for the number of layers
                 for segment in path:
                     start_x = (segment.start.real + offset_x) * scale_factor
                     start_y = (segment.start.imag + offset_y) * scale_factor
@@ -117,10 +120,10 @@ def get_scale_factor():
     scaling_factor = 100
 
     # Input fields for width and height in scaled units
-    st.subheader("X")
+    st.subheader("W")
     scaled_width_input = st.number_input("Enter width in scaled units", min_value=0.0, value=20.0, step=0.1)
 
-    st.subheader("Y")
+    st.subheader("H")
     scaled_height_input = st.number_input("Enter height in scaled units", min_value=0.0, value=40.0, step=0.1)
 
     # Convert the scaled values back to inches (e.g., 20 becomes 0.2)
@@ -128,7 +131,7 @@ def get_scale_factor():
     height_inch = scaled_height_input / scaling_factor
     # Calculate the scale factor
 
-    scale_factor = min(width_inch, height_inch) / 1000  # Adjust the divisor to scale down further
+    scale_factor = min(width_inch, height_inch) / 100 # Adjust the divisor to scale down further
 
     # Ensure the scale factor is within the desired range
     scale_factor = max(0.001, min(scale_factor, 1.0))
@@ -166,6 +169,7 @@ if uploaded_svg is not None:
 
     # Sidebar inputs for block thickness and extrusion depths
     st.sidebar.subheader("Thickness of the block-Z ")
+    st.sidebar.write("Overall thickness of the block")
     block_thickness = st.sidebar.number_input(
         "In Inches",
         min_value=0.0,
@@ -177,23 +181,25 @@ if uploaded_svg is not None:
 
     st.sidebar.subheader("Light Blue")
     extrusion_depth_cls_1 = st.sidebar.number_input(
-        "Recessed, in inches",
+        "Amount of Recessed for light blue color",
         min_value=0.0,
         max_value=block_thickness,  # Max value is based on block thickness
         value=min(4.0, block_thickness),
         step=0.1
     )
-    extrusion_depth_cls_1 = extrusion_depth_cls_1/1000
+    extrusion_depth_cls_1 = extrusion_depth_cls_1/100
 
-    st.sidebar.write("Dark Blue")
-    extrusion_depth_cls_2 = st.sidebar.number_input(
-        "Non-recessed, in inches",
-        min_value=0.0,
-        max_value=block_thickness,  # Max value is based on block thickness
-        value=min(0.1, block_thickness),
-        step=0.1
-    )
-    extrusion_depth_cls_2 = extrusion_depth_cls_2/1000
+
+
+    st.sidebar.write("Dark Blue color has 0.0 recess depth by default")
+    # extrusion_depth_cls_2 = st.sidebar.number_input(
+    #     "Non-recessed, in inches",
+    #     min_value=0.0,
+    #     max_value=block_thickness,  # Max value is based on block thickness
+    #     value=min(0.1, block_thickness),
+    #     step=0.1
+    # )
+    extrusion_depth_cls_2 = 0.0
 
     # Button to generate G-code or ISI file
     if st.button("Generate File"):
